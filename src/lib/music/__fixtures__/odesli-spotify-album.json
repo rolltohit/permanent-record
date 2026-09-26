@@ -1,0 +1,37 @@
+{
+  "_note": "Hand-built from the documented song.link v1-alpha.1 response shape; trimmed to the fields Rec Room reads.",
+  "entityUniqueId": "SPOTIFY_ALBUM::5vkqYmiPBYLaalcmjujWxK",
+  "userCountry": "US",
+  "pageUrl": "https://album.link/s/5vkqYmiPBYLaalcmjujWxK",
+  "entitiesByUniqueId": {
+    "SPOTIFY_ALBUM::5vkqYmiPBYLaalcmjujWxK": {
+      "id": "5vkqYmiPBYLaalcmjujWxK",
+      "type": "album",
+      "title": "In Rainbows",
+      "artistName": "Radiohead",
+      "thumbnailUrl": "https://i.scdn.co/image/ab67616d0000b273de3c04b5fc750b68899b20a9",
+      "apiProvider": "spotify"
+    },
+    "ITUNES_ALBUM::1109714933": {
+      "id": "1109714933",
+      "type": "album",
+      "title": "In Rainbows",
+      "artistName": "Radiohead",
+      "thumbnailUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/aa/bb/cc/source/512x512bb.jpg",
+      "apiProvider": "itunes"
+    },
+    "YOUTUBE_ALBUM::OLAK5uy_example": {
+      "id": "OLAK5uy_example",
+      "type": "album",
+      "title": "In Rainbows",
+      "artistName": "Radiohead",
+      "apiProvider": "youtube"
+    }
+  },
+  "linksByPlatform": {
+    "spotify": { "url": "https://open.spotify.com/album/5vkqYmiPBYLaalcmjujWxK", "entityUniqueId": "SPOTIFY_ALBUM::5vkqYmiPBYLaalcmjujWxK" },
+    "appleMusic": { "url": "https://geo.music.apple.com/us/album/_/1109714933?mt=1&app=music", "entityUniqueId": "ITUNES_ALBUM::1109714933" },
+    "itunes": { "url": "https://geo.music.apple.com/us/album/_/1109714933?mt=1&app=itunes", "entityUniqueId": "ITUNES_ALBUM::1109714933" },
+    "youtubeMusic": { "url": "https://music.youtube.com/playlist?list=OLAK5uy_example", "entityUniqueId": "YOUTUBE_ALBUM::OLAK5uy_example" }
+  }
+}

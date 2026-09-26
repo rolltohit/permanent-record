@@ -1,0 +1,37 @@
+{
+  "_note": "Hand-built from the documented iTunes Search API response shape.",
+  "resultCount": 3,
+  "results": [
+    {
+      "wrapperType": "collection",
+      "collectionType": "Album",
+      "artistId": 657515,
+      "collectionId": 1109714933,
+      "artistName": "Radiohead",
+      "collectionName": "In Rainbows",
+      "collectionViewUrl": "https://music.apple.com/us/album/in-rainbows/1109714933?uo=4",
+      "artworkUrl60": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/aa/bb/cc/source/60x60bb.jpg",
+      "artworkUrl100": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/aa/bb/cc/source/100x100bb.jpg",
+      "trackCount": 10,
+      "releaseDate": "2007-10-10T07:00:00Z",
+      "primaryGenreName": "Alternative"
+    },
+    {
+      "wrapperType": "track",
+      "kind": "song",
+      "trackId": 1109715066,
+      "collectionId": 1109714933,
+      "artistName": "Radiohead",
+      "collectionName": "In Rainbows",
+      "trackName": "Weird Fishes / Arpeggi",
+      "trackViewUrl": "https://music.apple.com/us/album/weird-fishes-arpeggi/1109714933?i=1109715066&uo=4",
+      "artworkUrl100": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/aa/bb/cc/source/100x100bb.jpg",
+      "releaseDate": "2007-10-10T12:00:00Z"
+    },
+    {
+      "wrapperType": "artist",
+      "artistName": "Radiohead",
+      "artistId": 657515
+    }
+  ]
+}

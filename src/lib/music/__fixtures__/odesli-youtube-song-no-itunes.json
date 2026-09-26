@@ -1,0 +1,19 @@
+{
+  "_note": "Hand-built: a YouTube-only match with no Apple or Spotify entity.",
+  "entityUniqueId": "YOUTUBE_VIDEO::abc123",
+  "pageUrl": "https://song.link/y/abc123",
+  "entitiesByUniqueId": {
+    "YOUTUBE_VIDEO::abc123": {
+      "id": "abc123",
+      "type": "song",
+      "title": "Basement Demo",
+      "artistName": "Small Band",
+      "thumbnailUrl": "https://i.ytimg.com/vi/abc123/hqdefault.jpg",
+      "apiProvider": "youtube"
+    }
+  },
+  "linksByPlatform": {
+    "youtube": { "url": "https://www.youtube.com/watch?v=abc123" },
+    "youtubeMusic": { "url": "https://music.youtube.com/watch?v=abc123" }
+  }
+}
