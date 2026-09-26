@@ -46,10 +46,19 @@ name. After that, admins create invites in the app (**Me → Manage invites**).
 
 ### 4. Deploy
 
-Deploy to Vercel. Set `NEXT_PUBLIC_SUPABASE_URL`,
-`NEXT_PUBLIC_SUPABASE_ANON_KEY` and, optionally, `NEXT_PUBLIC_SITE_URL` and
-`ODESLI_API_KEY`. **Don't** set the service-role key in Vercel. Only the local
-scripts use it.
+Deploy to Vercel and give it the Supabase URL and anon key. There are two
+ways:
+
+- **Easiest:** in Vercel, add the **Supabase** integration from the
+  Marketplace and link your existing project. It fills in the variables for
+  you.
+- **By hand:** under **Settings → Environment Variables**, set
+  `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (or
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`).
+
+Either way, **redeploy afterwards**, because these values are baked in at
+build time. Optional variables: `NEXT_PUBLIC_SITE_URL` and `ODESLI_API_KEY`.
+**Don't** set the service-role key in Vercel; only the local scripts use it.
 
 ## AI refresh (local Claude)
 

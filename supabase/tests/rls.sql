@@ -1,4 +1,5 @@
 -- RLS and access tests. Run with `npm run test:rls` against a local Supabase.
+-- Counts are scoped to this file's fixtures, so seeded data doesn't matter.
 -- Everything happens in one transaction that is rolled back.
 \set ON_ERROR_STOP on
 \o /dev/null
@@ -74,8 +75,8 @@ select pg_temp.expect_error($$select redeem_invite('testcode', 'x')$$, 'permissi
 -- Members read everything, write only their own ------------------------------
 select pg_temp.reset_role();
 select pg_temp.act_as('00000000-0000-4000-8000-000000000002');
-select pg_temp.expect_eq((select count(*) from recommendations), 1, 'member reads recommendations');
-select pg_temp.expect_eq((select count(*) from ratings), 1, 'member reads everyone''s ratings');
+select pg_temp.expect_eq((select count(*) from recommendations where id = '20000000-0000-4000-8000-000000000001'), 1, 'member reads recommendations');
+select pg_temp.expect_eq((select count(*) from ratings where item_id = '10000000-0000-4000-8000-000000000001'), 1, 'member reads everyone''s ratings');
 
 with u as (update ratings set stars = 1 where user_id = '00000000-0000-4000-8000-000000000001' returning 1)
 select pg_temp.expect_eq((select count(*) from u), 0, 'member cannot change someone else''s rating');
@@ -90,7 +91,7 @@ select pg_temp.expect_eq((select count(*) from d), 0, 'member cannot delete some
 insert into comments (recommendation_id, body) values ('20000000-0000-4000-8000-000000000001', 'nice');
 select pg_temp.expect_error($$insert into comments (recommendation_id, body) values ('20000000-0000-4000-8000-000000000001', repeat('x', 281))$$, 'check constraint');
 insert into reactions (recommendation_id, emoji) values ('20000000-0000-4000-8000-000000000001', '🔥');
-select pg_temp.expect_eq((select count(*) from reactions), 1, 'member reacts');
+select pg_temp.expect_eq((select count(*) from reactions where recommendation_id = '20000000-0000-4000-8000-000000000001'), 1, 'member reacts');
 
 -- AI fields are service-role only --------------------------------------------
 select pg_temp.expect_error($$update music_items set ai_summary = 'hacked'$$, 'permission denied');
@@ -119,10 +120,10 @@ select pg_temp.expect_error($$insert into invites (created_by) values (auth.uid(
 -- Suggestion owner can change status only
 select pg_temp.reset_role();
 select pg_temp.act_as('00000000-0000-4000-8000-000000000001');
-select pg_temp.expect_eq((select count(*) from ai_suggestions), 1, 'owner sees own suggestion');
+select pg_temp.expect_eq((select count(*) from ai_suggestions where id = '30000000-0000-4000-8000-000000000001'), 1, 'owner sees own suggestion');
 update ai_suggestions set status = 'dismissed' where id = '30000000-0000-4000-8000-000000000001';
 select pg_temp.expect_error($$update ai_suggestions set reason = 'edited'$$, 'permission denied');
-select pg_temp.expect_eq((select count(*) from invites), 2, 'admin reads invites');
+select pg_temp.expect_eq((select count(*) from invites where code in ('testcode', 'usedcode')), 2, 'admin reads invites');
 insert into invites (created_by) values (auth.uid());
 
 -- Redeeming an invite ---------------------------------------------------------
@@ -131,7 +132,7 @@ select pg_temp.act_as('00000000-0000-4000-8000-000000000004');
 select pg_temp.expect_error($$select redeem_invite('usedcode', 'Newbie')$$, 'invalid or expired');
 select redeem_invite('testcode', '  Newbie  ');
 select pg_temp.expect_eq((select count(*) from profiles where id = auth.uid() and display_name = 'Newbie' and not is_admin), 1, 'redeeming creates a trimmed, non-admin profile');
-select pg_temp.expect_eq((select count(*) from recommendations), 1, 'new member can read the feed');
+select pg_temp.expect_eq((select count(*) from recommendations where id = '20000000-0000-4000-8000-000000000001'), 1, 'new member can read the feed');
 select pg_temp.reset_role();
 select pg_temp.expect_eq((select count(*) from invites where code = 'testcode' and used_by = '00000000-0000-4000-8000-000000000004'), 1, 'invite is marked used');
 
