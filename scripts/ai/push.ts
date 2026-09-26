@@ -56,7 +56,7 @@ function readJson<S extends z.ZodTypeAny>(dir: string, name: string, schema: S, 
   return parsed.data;
 }
 
-// song.link allows ~10 requests/minute without an API key. Space calls out and
+// song.link is rate limited (and only used when ODESLI_API_KEY is set). Space calls out and
 // retry once after a 429 so a batch of picks doesn't silently degrade.
 function politeFetch(): typeof fetch {
   const gapMs = process.env.ODESLI_API_KEY ? 250 : 6500;
