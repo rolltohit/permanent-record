@@ -56,6 +56,10 @@ ways:
   `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (or
   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`).
 
+The URL is optional: without `NEXT_PUBLIC_SUPABASE_URL` the app uses
+`SUPABASE_URL` (set by the integration), then the group's project URL
+(`DEFAULT_SUPABASE_URL` in `src/lib/env.ts`). Only the key is required.
+
 Either way, **redeploy afterwards**, because these values are baked in at
 build time. Optional variables: `NEXT_PUBLIC_SITE_URL` and `ODESLI_API_KEY`.
 **Don't** set the service-role key in Vercel; only the local scripts use it.
