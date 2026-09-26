@@ -28,7 +28,7 @@ function dbError(error: { message: string } | null): string | null {
 }
 
 // ---------------------------------------------------------------------------
-// Music lookup. A small in-memory cache keeps us under song.link's rate limit.
+// Music lookup. A small in-memory cache spares the lookup services repeat calls.
 // ---------------------------------------------------------------------------
 
 const lookupCache = new Map<string, { at: number; value: unknown }>();

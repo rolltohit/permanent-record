@@ -29,7 +29,7 @@ from a local snapshot, and a script uploads it. Needs `.env.local` with
 
 5. **Dry run.** Run `npm run ai:push -- <work folder> --dry-run`. It validates
    both files and looks up every pick in the Apple Music catalog; this can
-   take a few minutes because song.link is rate limited. If it reports
+   take a few minutes if `ODESLI_API_KEY` is set, because song.link is rate limited. If it reports
    format errors, fix the file and re-run. If picks were dropped as "not
    found", you may replace them with other real records and dry-run again.
 

@@ -87,8 +87,9 @@ The [`refresh` skill](.claude/skills/refresh/SKILL.md) runs three steps:
 You can also run the steps by hand. `.ai-work/` is gitignored because it
 contains your friends' activity.
 
-Without an `ODESLI_API_KEY`, song.link allows about 10 lookups a minute, so
-push spaces out its calls. A batch of 25 picks takes a few minutes.
+With an `ODESLI_API_KEY`, song.link is rate limited, so push spaces out its
+calls and a batch of 25 picks takes a few minutes. Without a key, push skips
+song.link and runs quickly.
 
 ## Development
 
@@ -109,7 +110,7 @@ Local sign-in emails are delivered to Mailpit at http://127.0.0.1:54324.
 supabase/migrations/     schema, RLS policies, invite + item functions
 supabase/tests/          RLS tests (SQL)
 src/app/                 pages (feed, add, r/[id], for-you, me, admin/invites), server actions
-src/lib/music/           link parsing, iTunes search, song.link resolution
+src/lib/music/           link parsing, iTunes search, link resolution
 src/lib/ai/              batch file contract + pull/push logic
 scripts/ai/              ai:pull, ai:push
 .claude/skills/refresh/  the /refresh skill for Claude Code
