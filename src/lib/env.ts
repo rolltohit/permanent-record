@@ -3,8 +3,13 @@ function required(name: string, value: string | undefined): string {
   return value;
 }
 
+// The group's Supabase project. The URL is public (it ships to the browser anyway),
+// so it's the fallback when no URL variable is set. An explicit env var always wins.
+export const DEFAULT_SUPABASE_URL = "https://psmnhuxmhjhcnqhkhfpu.supabase.co";
+
 // NEXT_PUBLIC_* must be referenced literally so Next can inline them.
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+// SUPABASE_URL is set by the Vercel Supabase integration (server-side only).
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL;
 // Newer Supabase projects (and the Vercel integration) may only provide the publishable key.
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
