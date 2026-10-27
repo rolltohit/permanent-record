@@ -123,8 +123,8 @@ export function SignInFlow({
         }}
       >
         <p className="text-sm">
-          We emailed a code to <strong className="break-all">{sentTo.email}</strong>. Enter it here, or tap the button in that
-          email.
+          We emailed <strong className="break-all">{sentTo.email}</strong>. Tap the sign-in button in that email, or type
+          the code from it here.
         </p>
         <label htmlFor={ids.code} className="text-sm font-medium">
           Code from the email

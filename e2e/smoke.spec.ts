@@ -7,7 +7,7 @@ async function signIn(page: Page, email: string) {
   await page.goto("/login");
   await page.getByRole("textbox", { name: "Your email" }).fill(email);
   await page.getByRole("button", { name: "Email me a code" }).click();
-  await expect(page.getByText(`We emailed a code to ${email}`)).toBeVisible();
+  await expect(page.getByText(`We emailed ${email}`)).toBeVisible();
   const { code } = await latestSignInEmail(email);
   await page.getByRole("textbox", { name: "Code from the email" }).fill(code);
   await page.getByRole("button", { name: "Sign in" }).click();
