@@ -6,7 +6,7 @@ export const metadata = { title: "For you" };
 export default async function ForYouPage() {
   const suggestions = await getSuggestions();
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
       <div>
         <h1 className="font-display text-2xl font-bold">For you</h1>
         <p className="text-sm text-muted">
