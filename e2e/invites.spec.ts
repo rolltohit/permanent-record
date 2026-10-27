@@ -1,5 +1,5 @@
 import { type Browser, expect, type Page, test } from "@playwright/test";
-import { clearMail, latestSignInEmail } from "./mail";
+import { clearMail, latestSignInEmail, latestSignInLink } from "./mail";
 
 // Every test gets fresh addresses, so runs don't collide with each other or old data.
 const unique = () => `${Date.now()}${Math.floor(Math.random() * 1000)}`;
@@ -40,11 +40,11 @@ test("a friend joins from an invite link with an email code", async ({ browser, 
   const email = `dana${id}@example.com`;
   await page.getByRole("textbox", { name: "Your email" }).fill(email);
   await page.getByRole("button", { name: "Email me a code" }).click();
-  await expect(page.getByText(`We emailed a code to ${email}`)).toBeVisible();
+  await expect(page.getByText(`We emailed ${email}`)).toBeVisible();
 
   // Leaving and coming back (e.g. to check email on a phone) keeps your place.
   await page.reload();
-  await expect(page.getByText(`We emailed a code to ${email}`)).toBeVisible();
+  await expect(page.getByText(`We emailed ${email}`)).toBeVisible();
 
   const mail = await latestSignInEmail(email);
   expect(mail.subject).toBe("Your Rec Room code");
@@ -152,4 +152,19 @@ test("signed in but not a member: an invite for your email appears on /welcome",
   await page.getByRole("textbox", { name: "What should friends call you?" }).fill(`Gus${id}`);
   await page.getByRole("button", { name: "Join Rec Room" }).click();
   await expect(page.getByText(`Welcome to Rec Room, Gus${id}!`)).toBeVisible();
+});
+
+test("the email link works whichever template sent it (Supabase's default included)", async ({ browser, page }) => {
+  const id = unique();
+  const link = await createInvite(browser, { name: `Hal${id}` });
+  const email = `hal${id}@example.com`;
+
+  await clearMail();
+  await page.goto(link);
+  await page.getByRole("textbox", { name: "Your email" }).fill(email);
+  await page.getByRole("button", { name: "Email me a code" }).click();
+  await expect(page.getByText(`We emailed ${email}`)).toBeVisible();
+
+  await page.goto(await latestSignInLink(email));
+  await expect(page.getByText(`Welcome to Rec Room, Hal${id}!`)).toBeVisible();
 });
