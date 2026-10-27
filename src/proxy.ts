@@ -37,7 +37,8 @@ export async function proxy(request: NextRequest) {
   if (!user && !PUBLIC_PATHS.some((p) => path === p || path.startsWith(`${p}/`))) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.search = "";
+    // Come back here after signing in, e.g. to a recommendation a friend shared.
+    url.search = path === "/" ? "" : `?${new URLSearchParams({ next: path + request.nextUrl.search })}`;
     return NextResponse.redirect(url);
   }
   return response;

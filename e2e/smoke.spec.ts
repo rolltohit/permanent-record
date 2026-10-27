@@ -1,26 +1,16 @@
 import { expect, type Page, test } from "@playwright/test";
+import { clearMail, latestSignInEmail } from "./mail";
 
-const MAILPIT = "http://127.0.0.1:54324";
-
-/** Signs in through the real magic-link flow, reading the email from Mailpit. */
+/** Signs in through the real email-code flow, reading the code from Mailpit. */
 async function signIn(page: Page, email: string) {
-  await fetch(`${MAILPIT}/api/v1/messages`, { method: "DELETE" });
+  await clearMail();
   await page.goto("/login");
-  await page.getByRole("textbox", { name: "Email" }).fill(email);
-  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
-  await expect(page.getByText(`Check ${email}`)).toBeVisible();
-
-  let link: string | undefined;
-  await expect
-    .poll(async () => {
-      const list = await (await fetch(`${MAILPIT}/api/v1/search?query=to:${encodeURIComponent(email)}`)).json();
-      if (!list.messages?.length) return false;
-      const msg = await (await fetch(`${MAILPIT}/api/v1/message/${list.messages[0].ID}`)).json();
-      link = msg.Text.match(/https?:\/\/\S+verify\S+/)?.[0];
-      return Boolean(link);
-    })
-    .toBe(true);
-  await page.goto(link!);
+  await page.getByRole("textbox", { name: "Your email" }).fill(email);
+  await page.getByRole("button", { name: "Email me a code" }).click();
+  await expect(page.getByText(`We emailed a code to ${email}`)).toBeVisible();
+  const { code } = await latestSignInEmail(email);
+  await page.getByRole("textbox", { name: "Code from the email" }).fill(code);
+  await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL("/");
 }
 
@@ -63,7 +53,14 @@ test("For you shows AI picks and filters work", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "For you" })).toBeVisible();
 });
 
-test("signed-out visitors are sent to login", async ({ page }) => {
+test("signed-out visitors are sent to login, then back where they were", async ({ page }) => {
   await page.goto("/me");
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(/\/login\?next=%2Fme$/);
+  await clearMail();
+  await page.getByRole("textbox", { name: "Your email" }).fill("ben@example.com");
+  await page.getByRole("button", { name: "Email me a code" }).click();
+  const { code } = await latestSignInEmail("ben@example.com");
+  await page.getByRole("textbox", { name: "Code from the email" }).fill(code);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL("/me");
 });

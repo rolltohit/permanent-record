@@ -14,6 +14,7 @@
     "ai:pull": "tsx scripts/ai/pull.ts",
     "ai:push": "tsx scripts/ai/push.ts",
     "invite": "tsx scripts/admin/create-invite.ts",
+    "auth:push-emails": "tsx scripts/admin/push-auth-emails.ts",
     "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {

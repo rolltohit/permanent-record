@@ -212,20 +212,42 @@ export async function updateProfileAction(displayName: string): Promise<ActionRe
   return { ok: true, data: null };
 }
 
-export async function createInviteAction(email: string, grantsAdmin: boolean): Promise<ActionResult<string>> {
+export async function createInviteAction(input: {
+  name: string;
+  email: string;
+  grantsAdmin: boolean;
+}): Promise<ActionResult<string>> {
   const me = await requireMember();
   if (!me.is_admin) return fail("Only admins can create invites.");
-  const parsedEmail = z.string().trim().email().or(z.literal("")).safeParse(email);
+  const parsedName = z.string().trim().max(40).safeParse(input.name);
+  if (!parsedName.success) return fail("Names are up to 40 characters.");
+  const parsedEmail = z.string().trim().toLowerCase().email().or(z.literal("")).safeParse(input.email);
   if (!parsedEmail.success) return fail("That email doesn't look right.");
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("invites")
-    .insert({ created_by: me.id, email: parsedEmail.data || null, grants_admin: grantsAdmin })
+    .insert({
+      created_by: me.id,
+      name: parsedName.data || null,
+      email: parsedEmail.data || null,
+      grants_admin: input.grantsAdmin,
+    })
     .select("code")
     .single();
   if (error) return fail(dbError(error)!);
   refreshAll();
   return { ok: true, data: data.code };
+}
+
+/** Gives an unused invite another 30 days; the link stays the same. */
+export async function renewInviteAction(code: string): Promise<void> {
+  const me = await requireMember();
+  if (!me.is_admin) return;
+  const supabase = await createClient();
+  const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  const { error } = await supabase.from("invites").update({ expires_at: expires }).eq("code", code).is("used_by", null);
+  dbError(error);
+  refreshAll();
 }
 
 export async function deleteInviteAction(code: string): Promise<void> {

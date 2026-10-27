@@ -247,6 +247,18 @@ otp_expiry = 3600
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
+# Sign-in emails carry a code (works where you asked for it) and a token-hash
+# link to /auth/confirm (works on any device). New accounts get the
+# "confirmation" email, existing ones the "magic_link" one; both are the same.
+# Production uses the same file: `npm run auth:push-emails`.
+[auth.email.template.magic_link]
+subject = "Your Rec Room code"
+content_path = "./supabase/templates/sign-in.html"
+
+[auth.email.template.confirmation]
+subject = "Your Rec Room code"
+content_path = "./supabase/templates/sign-in.html"
+
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true
