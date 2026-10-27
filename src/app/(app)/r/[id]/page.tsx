@@ -25,7 +25,7 @@ export default async function RecommendationPage(props: PageProps<"/r/[id]">) {
     .filter((t) => t.rating || t.listened);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
       <RecCard entry={entry} viewerId={me.id} linkToDetail={false} />
 
       <section className="card p-4">

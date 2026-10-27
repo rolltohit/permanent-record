@@ -16,7 +16,7 @@ export default async function InvitesPage() {
   const invites = await getInvites();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
       <h1 className="font-display text-2xl font-bold">Invites</h1>
       <InviteCreator />
       <ul className="card divide-y divide-line">

@@ -14,7 +14,7 @@ export default async function MePage() {
   const ratingByItem = new Map(ratings.map((r) => [r.item.id, r]));
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
       <section className="card flex items-center gap-4 p-4">
         <Avatar profile={me} size={56} />
         <div className="flex-1">
