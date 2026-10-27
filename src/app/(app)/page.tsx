@@ -23,6 +23,18 @@ export default async function FeedPage(props: PageProps<"/">) {
 
   return (
     <div className="flex flex-col gap-4">
+      {params.joined === "1" && (
+        <div role="status" className="card flex flex-col gap-1 p-4">
+          <p className="font-medium">Welcome to Rec Room, {me.display_name}! 🎶</p>
+          <p className="text-sm text-muted">
+            This is what your friends are recommending. Got something you love?{" "}
+            <Link href="/add" className="text-accent underline">
+              Recommend it
+            </Link>
+            . You can change your name any time on your profile.
+          </p>
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         <Link href={href({ view: "all" })} className={`chip ${view === "all" ? "chip-on" : ""}`}>
           All

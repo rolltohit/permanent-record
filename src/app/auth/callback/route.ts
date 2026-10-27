@@ -1,23 +1,12 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import type { NextRequest } from "next/server";
+import { completeEmailLink } from "@/lib/auth-link";
 
-// Magic links land here with a PKCE code, which we swap for a session cookie.
+// Older magic links carry a PKCE code, which only works in the browser that
+// asked for it. Kept so links already sent keep working; new emails use
+// /auth/confirm.
 export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const code = searchParams.get("code");
-  const nextParam = searchParams.get("next") ?? "/";
-  const next = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/";
-
-  // Redirect back to the host the browser used (nextUrl.origin can differ in
-  // dev), or the session cookie we just set won't be sent.
-  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? request.nextUrl.host;
-  const proto = request.headers.get("x-forwarded-proto") ?? request.nextUrl.protocol.replace(":", "");
-  const origin = `${proto}://${host}`;
-
-  if (code) {
-    const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(`${origin}${next}`);
-  }
-  return NextResponse.redirect(`${origin}/login?error=link`);
+  const code = request.nextUrl.searchParams.get("code");
+  return completeEmailLink(request, async (supabase) =>
+    code ? supabase.auth.exchangeCodeForSession(code) : { error: new Error("missing code") },
+  );
 }

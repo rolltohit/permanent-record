@@ -112,6 +112,7 @@ export async function getMyActivity(): Promise<MyActivity> {
 
 export interface InviteRow {
   code: string;
+  name: string | null;
   email: string | null;
   grants_admin: boolean;
   used_at: string | null;
@@ -124,7 +125,7 @@ export async function getInvites(): Promise<InviteRow[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("invites")
-    .select("code, email, grants_admin, used_at, expires_at, created_at, used_by_profile:profiles!invites_used_by_fkey(id, display_name, avatar_url)")
+    .select("code, name, email, grants_admin, used_at, expires_at, created_at, used_by_profile:profiles!invites_used_by_fkey(id, display_name, avatar_url)")
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data as unknown as InviteRow[];

@@ -21,11 +21,18 @@ can install to your home screen.
 
 1. Create a project at [supabase.com](https://supabase.com).
 2. Apply the schema. Either run `npx supabase link` then `npx supabase db push`,
-   or paste `supabase/migrations/0001_init.sql` into the SQL editor.
+   or paste each file in `supabase/migrations/` into the SQL editor, in order.
 3. Go to **Authentication → URL Configuration**:
    - Set **Site URL** to your deployed URL.
-   - Add `https://your-domain/**` to **Redirect URLs**.
-4. Copy `.env.example` to `.env.local` and fill in the URL, the anon key and
+   - Add `https://your-domain/**` to **Redirect URLs** (the `/**` matters).
+4. Set up the sign-in email: with a personal access token in
+   `SUPABASE_ACCESS_TOKEN`, run `npm run auth:push-emails`. It installs
+   `supabase/templates/sign-in.html`, which carries a code plus a one-tap
+   link that works on any device, and switches to 6-digit codes.
+5. Recommended: under **Authentication → SMTP Settings**, connect an email
+   service (e.g. Resend's free tier). Supabase's built-in email sends only
+   2 emails an hour for the whole project.
+6. Copy `.env.example` to `.env.local` and fill in the URL, the anon key and
    the service-role key.
 
 ### 2. Run locally
@@ -41,8 +48,11 @@ npm run dev
 npm run invite -- --admin
 ```
 
-Open the printed link, enter your email, click the magic link, and pick a
-name. After that, admins create invites in the app (**Me → Manage invites**).
+Open the printed link, enter your name and email, and type the code we email
+you (or tap the button in the email). After that, admins invite friends in the
+app (**Me → Manage invites**): add their name and, optionally, their email,
+then share the link. Someone whose email was invited can also just sign in
+from the login page. Invites last 30 days and can be renewed.
 
 ### 4. Deploy
 
