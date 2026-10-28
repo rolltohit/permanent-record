@@ -35,7 +35,8 @@ scripts print which Supabase project they use; production is
 
 3. **Write `summaries.json`.** Read `summaries_todo.json` and write one summary
    per item. If the list is empty, write `[]`. Accuracy over colour: if you
-   don't know a record well, stay general rather than invent details.
+   don't know a record well, stay general rather than invent details, and
+   never echo the recommender's note.
 
 4. **Write `suggestions.json`.** Read `taste_profiles.json`. For each member
    with `needs_picks: true`, choose picks from both what they shared
@@ -56,7 +57,14 @@ scripts print which Supabase project they use; production is
 
 7. **Push.** Run `npm run ai:push -- <work folder>`. Pushing twice is safe.
 
-8. **Report.** In a few lines: the batch id, summaries written, picks per
+8. **Summarise the new picks.** If the push wrote any picks, those albums and
+   songs are new to the room and have no summary yet. Run `npm run ai:pull`
+   once more: it should list just those items (and print `NOTHING_NEW` if
+   there are none). Write their `summaries.json` the same way, write `[]` to
+   `suggestions.json`, then dry-run and push as in steps 5 and 7. Do this
+   pass once only.
+
+9. **Report.** In a few lines: the batch id(s), summaries written, picks per
    member (titles), anything skipped and why.
 
 Never commit anything under `.ai-work/`; it's gitignored because it holds the
