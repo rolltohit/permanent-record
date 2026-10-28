@@ -21,10 +21,13 @@ An array of \`{ "item_id": string, "summary": string }\`, one per todo item.
 - 2–3 sentences, 20–600 characters, plain text, no markdown.
 - Describe the sound, the era/scene it came from, and what makes it notable.
   For a song, mention the album it's from if known.
-- Only state facts you're confident about. If you don't know the record
-  well, describe it more generally (genre, artist's style) rather than
-  inventing specifics like chart positions, producers or dates.
-- Don't quote or paraphrase the friends' comments; they're context only.
+- Only state facts you're certain of. Leave out hometowns, members' names,
+  labels, producers, chart positions and exact dates unless you are sure;
+  a wrong detail is worse than a missing one. If you don't know the record
+  well, describe it more generally (genre, the artist's style).
+- Never quote or paraphrase the recommender's notes or the group's comments,
+  not even their adjectives. They're context only; the summary should read
+  as your own description of the music.
 
 ## Output 2: \`suggestions.json\`
 An array of \`{ "user_id", "kind": "album" | "track", "title", "artist", "reason" }\`.
