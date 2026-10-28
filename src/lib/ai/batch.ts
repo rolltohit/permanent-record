@@ -39,7 +39,41 @@ function isDisliked(stars: number | null, thumb: number | null, reactions: strin
   return (stars !== null && stars <= 2) || thumb === -1 || reactions.some((r) => NEGATIVE_REACTIONS.has(r));
 }
 
-export function buildBatch(room: RoomSnapshot, opts: { resummarize?: boolean } = {}) {
+/** A member gets picks once they've shared something or reacted to someone else's share. */
+export function hasTaste(p: Pick<TasteProfile, "loved" | "recommended_to_group">): boolean {
+  return p.loved.length > 0 || p.recommended_to_group.length > 0;
+}
+
+/** Short, stable, non-cryptographic hash (cyrb53), enough to notice a change. */
+function shortHash(s: string): string {
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 2654435761);
+    h2 = Math.imul(h2 ^ c, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+
+/**
+ * A fingerprint of everything that shapes a member's picks. The daily run
+ * compares it with the last pushed batch so members only get new picks when
+ * their taste signals changed (not every day).
+ */
+export function tasteKey(p: Pick<TasteProfile, "loved" | "disliked" | "recommended_to_group">): string {
+  const items = (list: TasteItem[]) =>
+    list.map((i) => [i.kind, i.artist, i.title, i.stars, i.thumb, [...i.reactions].sort(), i.their_comments]).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+  const recs = p.recommended_to_group.map((r) => [r.artist, r.title, r.note ?? null]).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+  return shortHash(JSON.stringify({ loved: items(p.loved), disliked: items(p.disliked), recs }));
+}
+
+export function buildBatch(
+  room: RoomSnapshot,
+  opts: { resummarize?: boolean; previousTasteKeys?: Record<string, string> | null; allPicks?: boolean } = {},
+) {
   const itemById = new Map(room.items.map((i) => [i.id, i]));
   const recById = new Map(room.recommendations.map((r) => [r.id, r]));
 
@@ -64,6 +98,9 @@ export function buildBatch(room: RoomSnapshot, opts: { resummarize?: boolean } =
   const roomExclude: ExcludeEntry[] = room.items.map((i) => ({ external_key: i.external_key, artist: i.artist, title: i.title }));
 
   const tasteProfiles: TasteProfile[] = room.profiles.map((p) => {
+    // Their own shares are a separate signal (recommended_to_group), so ratings
+    // and reactions on them don't count as loved/disliked.
+    const ownItemIds = new Set(room.recommendations.filter((r) => r.from_user === p.id).map((r) => r.item_id));
     const itemIds = new Set<string>();
     const ratingByItem = new Map(room.ratings.filter((r) => r.user_id === p.id).map((r) => [r.item_id, r]));
     ratingByItem.forEach((_, id) => itemIds.add(id));
@@ -86,7 +123,7 @@ export function buildBatch(room: RoomSnapshot, opts: { resummarize?: boolean } =
     const disliked: TasteItem[] = [];
     for (const itemId of itemIds) {
       const item = itemById.get(itemId);
-      if (!item) continue;
+      if (!item || ownItemIds.has(itemId)) continue;
       const rating = ratingByItem.get(itemId);
       const reactions = reactionsByItem.get(itemId) ?? [];
       const entry: TasteItem = {
@@ -109,20 +146,25 @@ export function buildBatch(room: RoomSnapshot, opts: { resummarize?: boolean } =
       .filter((i) => i !== undefined)
       .map((i) => ({ external_key: i.external_key, artist: i.artist, title: i.title }));
 
+    const recommended_to_group = room.recommendations
+      .filter((r) => r.from_user === p.id)
+      .map((r) => ({ rec: r, item: itemById.get(r.item_id) }))
+      .filter((x) => x.item !== undefined)
+      .map(({ rec, item }) => ({ kind: item!.kind, title: item!.title, artist: item!.artist, album: item!.album, note: rec.note }));
+
+    const profile = { loved, disliked, recommended_to_group };
+    const changed = opts.allPicks || !opts.previousTasteKeys || opts.previousTasteKeys[p.id] !== tasteKey(profile);
     return {
       user_id: p.id,
       display_name: p.display_name,
-      loved,
-      disliked,
-      recommended_to_group: room.recommendations
-        .filter((r) => r.from_user === p.id)
-        .map((r) => ({ title: itemById.get(r.item_id)?.title ?? "", artist: itemById.get(r.item_id)?.artist ?? "", note: r.note }))
-        .filter((r) => r.title),
+      ...profile,
       exclude: dedupeExclude([...roomExclude, ...previouslySuggested]),
+      needs_picks: hasTaste(profile) && changed,
     };
   });
 
-  return { summariesTodo, tasteProfiles };
+  const tasteKeys = Object.fromEntries(tasteProfiles.map((p) => [p.user_id, tasteKey(p)]));
+  return { summariesTodo, tasteProfiles, tasteKeys };
 }
 
 function dedupeExclude(entries: ExcludeEntry[]): ExcludeEntry[] {

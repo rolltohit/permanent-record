@@ -50,10 +50,22 @@ export type ExcludeEntry = z.infer<typeof excludeEntrySchema>;
 export const tasteProfileSchema = z.object({
   user_id: z.string().uuid(),
   display_name: z.string(),
+  /** From their ratings and reactions on what *others* recommended (and on their own AI picks). */
   loved: z.array(tasteItemSchema),
   disliked: z.array(tasteItemSchema),
-  recommended_to_group: z.array(z.object({ title: z.string(), artist: z.string(), note: z.string().nullable() })),
+  /** What they chose to share with the group: as strong a signal as a 5-star rating. */
+  recommended_to_group: z.array(
+    z.object({
+      kind: z.enum(["album", "track"]).optional(),
+      title: z.string(),
+      artist: z.string(),
+      album: z.string().nullable().optional(),
+      note: z.string().nullable(),
+    }),
+  ),
   exclude: z.array(excludeEntrySchema),
+  /** True when their taste signals changed since the last pushed batch, so they get new picks. */
+  needs_picks: z.boolean().default(true),
 });
 export type TasteProfile = z.infer<typeof tasteProfileSchema>;
 

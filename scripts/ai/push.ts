@@ -132,6 +132,10 @@ async function main() {
         skip(s, "unknown user_id");
         continue;
       }
+      if (!profile.needs_picks) {
+        skip(s, "no new taste signals for this member in this batch");
+        continue;
+      }
       if ((perUser.get(s.user_id) ?? 0) >= SUGGESTIONS_PER_USER) {
         skip(s, `over the ${SUGGESTIONS_PER_USER}-per-member limit`);
         continue;
@@ -187,7 +191,10 @@ async function main() {
   }
 
   if (!dryRun) {
-    const { error } = await db.from("ai_batches").update({ pushed_at: new Date().toISOString(), stats }).eq("id", meta.batch_id);
+    // Keep what ai:pull recorded (taste_keys) alongside the push counts.
+    const { data: existing } = await db.from("ai_batches").select("stats").eq("id", meta.batch_id).single();
+    const merged = { ...((existing?.stats as object | null) ?? {}), ...stats };
+    const { error } = await db.from("ai_batches").update({ pushed_at: new Date().toISOString(), stats: merged }).eq("id", meta.batch_id);
     if (error) fail(error.message);
   }
 
