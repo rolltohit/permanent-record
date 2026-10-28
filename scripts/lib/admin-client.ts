@@ -1,16 +1,23 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
+import { DEFAULT_SUPABASE_URL } from "@/lib/env";
 
 config({ path: [".env.local", ".env"], quiet: true });
 
-/** Service-role client for local scripts only. Bypasses RLS. */
+/**
+ * Service-role client for scripts only. Bypasses RLS. The URL falls back like
+ * the app's (SUPABASE_URL, then the group's project), so a cloud session with
+ * just SUPABASE_SERVICE_ROLE_KEY set works; the seed script still refuses
+ * anything but a local URL.
+ */
 export function adminClient(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    console.error("Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local (see .env.example).");
+  if (!key) {
+    console.error("Set SUPABASE_SERVICE_ROLE_KEY (in .env.local, or the cloud environment's variables). See .env.example.");
     process.exit(1);
   }
+  console.error(`Supabase: ${new URL(url).host}`);
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 

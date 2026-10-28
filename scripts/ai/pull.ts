@@ -1,8 +1,12 @@
 /**
- * npm run ai:pull [-- --resummarize]
+ * npm run ai:pull [-- --resummarize] [--all-picks] [--force]
  *
- * Snapshots the room into .ai-work/<stamp>/ for a local Claude session.
+ * Snapshots the room into .ai-work/<stamp>/ for a Claude session.
  * See .claude/skills/refresh/SKILL.md.
+ *
+ * Members only get new picks when their taste signals changed since the last
+ * pushed batch (--all-picks overrides). With nothing to summarise and no new
+ * picks to make, it creates no batch and prints NOTHING_NEW (--force overrides).
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -24,12 +28,30 @@ async function main() {
     fetchAll<RoomSnapshot["suggestions"][number]>(db, "ai_suggestions", "user_id, item_id"),
   ]);
 
-  const { summariesTodo, tasteProfiles } = buildBatch(
-    { profiles, items, recommendations, ratings, reactions, comments, suggestions },
-    { resummarize: flag("resummarize") },
-  );
+  const { data: last, error: lastErr } = await db
+    .from("ai_batches")
+    .select("stats")
+    .not("pushed_at", "is", null)
+    .order("pushed_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (lastErr) throw new Error(`ai_batches: ${lastErr.message}`);
+  const previousTasteKeys = (last?.stats as { taste_keys?: Record<string, string> } | null)?.taste_keys ?? null;
 
-  const { data: batch, error } = await db.from("ai_batches").insert({}).select("id, pulled_at").single();
+  const { summariesTodo, tasteProfiles, tasteKeys } = buildBatch(
+    { profiles, items, recommendations, ratings, reactions, comments, suggestions },
+    { resummarize: flag("resummarize"), previousTasteKeys, allPicks: flag("all-picks") },
+  );
+  const needPicks = tasteProfiles.filter((p) => p.needs_picks);
+
+  if (!summariesTodo.length && !needPicks.length && !flag("force")) {
+    console.log("NOTHING_NEW: no items need summaries and no member's taste changed since the last batch.");
+    console.log("No batch was created. Use --force to pull anyway.");
+    return;
+  }
+
+  // taste_keys become the baseline for the next run once this batch is pushed.
+  const { data: batch, error } = await db.from("ai_batches").insert({ stats: { taste_keys: tasteKeys } }).select("id, pulled_at").single();
   if (error) throw new Error(`ai_batches: ${error.message}`);
 
   const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
@@ -44,10 +66,9 @@ async function main() {
   write("taste_profiles.json", tasteProfiles);
   write("INSTRUCTIONS.md", INSTRUCTIONS);
 
-  const withSignal = tasteProfiles.filter((p) => p.loved.length > 0).length;
   console.log(`Pulled batch ${batch.id}`);
   console.log(`  ${summariesTodo.length} item(s) need summaries`);
-  console.log(`  ${withSignal} of ${tasteProfiles.length} member(s) have liked something (eligible for picks)`);
+  console.log(`  ${needPicks.length} of ${tasteProfiles.length} member(s) need picks${needPicks.length ? `: ${needPicks.map((p) => p.display_name).join(", ")}` : ""}`);
   console.log(`\nWork folder: ${dir}`);
 }
 

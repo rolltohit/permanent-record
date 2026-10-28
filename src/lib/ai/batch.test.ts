@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CatalogResult } from "@/lib/music/resolve";
-import { buildBatch, isExcluded, matchCatalog, norm, planSummaries, type RoomSnapshot } from "./batch";
+import { buildBatch, hasTaste, isExcluded, matchCatalog, norm, planSummaries, type RoomSnapshot, tasteKey } from "./batch";
 import { suggestionsFileSchema, summariesFileSchema, tasteProfileSchema } from "./batch-schema";
 
 const U1 = "11111111-1111-4111-8111-111111111111";
@@ -52,9 +52,53 @@ describe("buildBatch", () => {
     expect(ana.loved.map((i) => i.title)).toEqual(["Nights"]); // 🔥 reaction
     expect(ana.disliked.map((i) => i.title)).toEqual(["Loud Record"]); // 😴 outweighs 3 stars
     expect(ben.loved).toEqual([expect.objectContaining({ title: "In Rainbows", stars: 5, their_comments: ["the drums!!"] })]);
-    expect(ben.disliked.map((i) => i.title)).toEqual(["Loud Record"]);
-    expect(ben.recommended_to_group.map((r) => r.title)).toEqual(["Nights", "Loud Record"]);
+    // Ben shared Loud Record himself, so his 2 stars on it aren't a "dislike" signal.
+    expect(ben.disliked).toEqual([]);
+    expect(ben.recommended_to_group).toEqual([
+      { kind: "track", title: "Nights", artist: "Frank Ocean", album: "Blonde", note: null },
+      { kind: "album", title: "Loud Record", artist: "Noise Band", album: null, note: null },
+    ]);
     tasteProfiles.forEach((p) => tasteProfileSchema.parse(p));
+  });
+
+  it("counts sharing alone as enough taste for picks", () => {
+    const solo: RoomSnapshot = { ...room, ratings: [], reactions: [], comments: [] };
+    const { tasteProfiles: ps } = buildBatch(solo);
+    expect(ps.map((p) => [p.display_name, p.needs_picks])).toEqual([
+      ["Ana", true],
+      ["Ben", true],
+    ]);
+    const lurker = buildBatch({ ...solo, profiles: [...solo.profiles, { id: "33333333-3333-4333-8333-333333333333", display_name: "Cleo" }] });
+    const cleo = lurker.tasteProfiles.find((p) => p.display_name === "Cleo")!;
+    expect(hasTaste(cleo)).toBe(false);
+    expect(cleo.needs_picks).toBe(false);
+  });
+
+  it("only re-picks for members whose taste changed since the last batch", () => {
+    const first = buildBatch(room);
+    expect(first.tasteProfiles.every((p) => p.needs_picks)).toBe(true); // no baseline yet
+
+    const unchanged = buildBatch(room, { previousTasteKeys: first.tasteKeys });
+    expect(unchanged.tasteProfiles.map((p) => p.needs_picks)).toEqual([false, false]);
+
+    // Ana thumbs-up Ben's record; only Ana's picks are due.
+    const later = buildBatch(
+      { ...room, ratings: [...room.ratings, { user_id: U1, item_id: I2, stars: null, thumb: 1 }] },
+      { previousTasteKeys: first.tasteKeys },
+    );
+    expect(later.tasteProfiles.map((p) => [p.display_name, p.needs_picks])).toEqual([
+      ["Ana", true],
+      ["Ben", false],
+    ]);
+    expect(buildBatch(room, { previousTasteKeys: first.tasteKeys, allPicks: true }).tasteProfiles.every((p) => p.needs_picks)).toBe(true);
+  });
+
+  it("fingerprints taste regardless of order, and changes with any signal", () => {
+    const ben = buildBatch(room).tasteProfiles[1];
+    const reordered = { ...ben, recommended_to_group: [...ben.recommended_to_group].reverse() };
+    expect(tasteKey(reordered)).toBe(tasteKey(ben));
+    expect(tasteKey({ ...ben, loved: [{ ...ben.loved[0], stars: 4 }] })).not.toBe(tasteKey(ben));
+    expect(tasteKey(ben)).toMatch(/^[a-z0-9]{6,12}$/);
   });
 
   it("excludes everything in the room once", () => {
